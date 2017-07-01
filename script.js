@@ -7,6 +7,7 @@ menu = $('#menu');
 toc = $('#toc');
 overlay = $('#overlay');
 sidebar = $('#sidebar');
+footer = $('#footer');
 
 /* see: http://jsfiddle.net/mekwall/up4nu/ */
 navs = rightnav.find('a');
@@ -30,7 +31,7 @@ if (anchors.length > 0)
 prev_nav = 0;
 scrolling = true;
 
-function update_navs() {
+function update_navs(scroll) {
 	doc_width = $(window).width();
 	doc_height = $(window).height();
 	width = Math.min(max_width, doc_width - 2 * (min_pad + nav_margin) - leftnav_width - rightnav_width);
@@ -58,7 +59,7 @@ function update_navs() {
 			rightnav.css('display', 'none');
 			is_nav_embedded = true;
 		} if (is_collapsed) {
-			sidebar.detach().appendTo(leftnav);
+			menu.detach().appendTo(leftnav);
 			navbar.css('display', 'none');
 			leftnav.css('display', 'block');
 			contents.css('margin-top', 0);
@@ -72,7 +73,7 @@ function update_navs() {
 			rightnav.css('display', 'block');
 			is_nav_embedded = false;
 		} if (is_collapsed) {
-			sidebar.detach().appendTo(leftnav);
+			menu.detach().appendTo(leftnav);
 			navbar.css('display', 'none');
 			leftnav.css('display', 'block');
 			contents.css('margin-top', 0);
@@ -80,27 +81,33 @@ function update_navs() {
 		}
 	}
 
-	leftnav_x = left - nav_margin - leftnav_width
+	leftnav_x = left - nav_margin - leftnav_width;
 	if (leftnav_x <= min_pad) {
-		leftnav.css('left', min_pad)
-		rightnav.css('left', leftnav_width + min_pad + width + 2 * nav_margin)
-		contents.css('width', width)
-		contents.css('margin-left', leftnav_width + nav_margin + min_pad)
+		leftnav.css('left', min_pad);
+		rightnav.css('left', leftnav_width + min_pad + width + 2 * nav_margin);
+		contents.css('width', width);
+		contents.css('margin-left', leftnav_width + nav_margin + min_pad);
 	} else {
-		leftnav.css('left', leftnav_x)
-		rightnav.css('left', left + width + nav_margin)
-		contents.css('width', max_width)
-		contents.css('margin-left', 'auto')
+		leftnav.css('left', leftnav_x);
+		rightnav.css('left', left + width + nav_margin);
+		contents.css('width', max_width);
+		contents.css('margin-left', 'auto');
 	}
-	contents.css('margin-left', left)
-	leftnav.css('max-height', doc_height - 60)
-	rightnav.css('max-height', doc_height - 60)
+	contents.css('margin-left', left);
+	update_nav_height(doc_height, scroll);
+}
+
+function update_nav_height(doc_height, scroll) {
+	nav_height = Math.min(footer.offset().top - scroll, doc_height - 5);
+	leftnav.css('max-height', nav_height - 60);
+	rightnav.css('max-height', nav_height - 60);
 }
 
 $(window).resize(function() {
-	update_navs();
+	scroll = anchors[prev_nav].offset().top + offset;
+	update_navs(scroll);
 	scrolling = false;
-	$(this).scrollTop(anchors[prev_nav].offset().top + offset);
+	$(this).scrollTop(scroll);
 	scrolling = true;
 });
 
@@ -122,6 +129,8 @@ $(window).scroll(function() {
 		$(navs[i]).addClass('active');
 		prev_nav = i;
 	}
+
+	update_nav_height($(window).height(), scroll);
 });
 
 $('label.tree-toggler').click(function () {
@@ -143,7 +152,7 @@ $('[data-toggle="closemenu"]').click(function () {
 	setTimeout(function(){ overlay.css('z-index', -1000); }, 500);
 });
 
-update_navs();
+update_navs($(window).scrollTop());
 if (!is_collapsed)
 	leftnav.css('display', 'block');
 if (!is_nav_embedded)
