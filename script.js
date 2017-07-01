@@ -104,10 +104,12 @@ function update_nav_height(doc_height, scroll) {
 }
 
 $(window).resize(function() {
-	scroll = anchors[prev_nav].offset().top + offset;
+	scroll = $(window).scrollTop();
 	update_navs(scroll);
 	scrolling = false;
-	$(this).scrollTop(scroll);
+	if (anchors.length > 0)
+		$(this).scrollTop(anchors[i].offset().top + offset);
+	else $(this).scrollTop(offset);
 	scrolling = true;
 });
 
@@ -115,7 +117,7 @@ $(window).scroll(function() {
 	if (!scrolling) return;
 
 	i = 0;
-	scroll = $(this).scrollTop();
+	scroll = $(window).scrollTop();
 	for (; i < anchors.length; i++) {
 		if (scroll + 1 < anchors[i].offset().top) break;
 	}
@@ -152,7 +154,8 @@ $('[data-toggle="closemenu"]').click(function () {
 	setTimeout(function(){ overlay.css('z-index', -1000); }, 500);
 });
 
-update_navs($(window).scrollTop());
+scroll = $(window).scrollTop();
+update_navs(scroll);
 if (!is_collapsed)
 	leftnav.css('display', 'block');
 if (!is_nav_embedded)
