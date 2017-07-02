@@ -524,6 +524,8 @@ def templates_to_html(templates):
 			continue
 		param = template.type.replace('<','&lt;').replace('>','&gt;')
 		if template.default_value != None:
+			if template.default_value == 'void':
+				continue
 			param += ' = ' + template.default_value
 		params.append('<span class="arg">' + param + '</span>')
 	return '<div class="template">template&lt;' + ', '.join(params) + '&gt;</div>'
@@ -552,9 +554,9 @@ def generate_member_list(out, nav, members, name_prefix=""):
 		elif isinstance(obj, Typedef):
 			typedef = to_html(obj.type)
 			if '()' in typedef:
-				typedef = typedef.replace('()', '(' + obj.name + ')') + to_html(obj.args)
+				typedef = typedef.replace('()', '(' + name_prefix + obj.name + ')') + to_html(obj.args)
 			else:
-				typedef += ' ' + obj.name
+				typedef += ' ' + name_prefix + obj.name
 			nav.write('<li><a href="#' + obj.link + '">typedef ' + obj.name + '</a>')
 			out.write('<div class="panel panel-default active"><div class="panel-heading">typedef ')
 			out.write(typedef + '<div class="source">[<a href="' + source_link + '">view source</a>]</div></div><div class="panel-body">')
