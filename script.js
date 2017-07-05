@@ -108,7 +108,7 @@ $(window).resize(function() {
 	update_navs(scroll);
 	scrolling = false;
 	if (anchors.length > 0)
-		$(this).scrollTop(anchors[i].offset().top + offset);
+		$(this).scrollTop(anchors[prev_nav].offset().top + offset);
 	else $(this).scrollTop(offset);
 	scrolling = true;
 });

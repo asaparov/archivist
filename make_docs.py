@@ -123,7 +123,10 @@ def parse_variable(member):
 	initializer_element = member.find('initializer')
 	initializer = initializer_element.text if initializer_element != None else None
 	location_attrib = member.find('location').attrib
-	location = Location(location_attrib['bodyfile'], int(location_attrib['bodystart']), None)
+	if 'bodyfile' in location_attrib:
+		location = Location(location_attrib['bodyfile'], int(location_attrib['bodystart']), None)
+	else:
+		location = Location(location_attrib['file'], int(location_attrib['line']), None)
 	variable = Variable(type, name, description, initializer, location)
 	if 'id' in member.attrib:
 		refs[member.attrib['id']] = variable
@@ -162,7 +165,7 @@ def sp_to_spaces(element):
 
 def to_html(element):
 	# convert all XML tags into HTML tags, without changing the tree structure
-	parameter_lists, codelines, headings, simplesects = [], [], [], {}
+	parameter_lists, codelines, headings, tables, simplesects = [], [], [], [], {}
 	for child in element.iter():
 		if child.tag == 'para':
 			child.tag = 'p'
@@ -193,6 +196,7 @@ def to_html(element):
 					child.attrib['href'] = url_root + obj.location.path + '.html#' + obj.link
 		elif child.tag == 'parameterlist':
 			child.tag = 'table'
+			child.attrib['class'] = 'params'
 			parameter_lists.append(child)
 		elif child.tag == 'parameteritem':
 			child.tag = 'tr'
@@ -227,6 +231,25 @@ def to_html(element):
 			child.attrib['class'] = 'highlight ' + child.attrib['class']
 		elif child.tag == 'heading':
 			headings.append(child)
+		elif child.tag == 'formula':
+			if child.text.strip().startswith('\\['):
+				child.tag = 'div'
+			else:
+				child.tag = 'span'
+			child.attrib.clear()
+			child.attrib['class'] = 'formula'
+		elif child.tag == 'table':
+			tables.append(child)
+		elif child.tag == 'row':
+			child.tag = 'tr'
+		elif child.tag == 'entry':
+			child.tag = 'td'
+			is_head = False
+			if 'thead' in child.attrib and child.attrib['thead'] == 'yes':
+				is_head = True
+			child.attrib.clear();
+			if is_head:
+				child.attrib['class'] = 'thead'
 
 	# transform the parameter list into a table, move all children into a tbody node
 	for node in parameter_lists:
@@ -245,6 +268,19 @@ def to_html(element):
 		for child in children:
 			tbody.append(child)
 		node.append(tbody)
+
+	# put tables in a div to enable overflow
+	for table in tables:
+		children = list(table)
+		new_table = et.Element('table')
+		new_table.attrib['class'] = 'table table-striped table-bordered'
+		for child in children:
+			new_table.append(child)
+		table.clear()
+		table.append(new_table)
+
+		table.tag = 'div'
+		table.attrib['class'] = 'table-wrapper'
 
 	# transform headings and generate anchors
 	for heading in headings:
@@ -486,7 +522,7 @@ def generate_member_table(out, name, nav, members, title, name_prefix=""):
 	else:
 		nav.write('<li><a href="#' + link + '">Members</a></li>')
 	out.write('<a id="' + link + '"></a>')
-	out.write('<table class="table"><thead><tr><th colspan="2">' + title + '</th></tr></thead><tbody>')
+	out.write('<table class="table members"><colgroup><col class="type-col" /><col class="name-col" /></colgroup><thead><tr><th colspan="2">' + title + '</th></tr></thead><tbody>')
 	for obj in members:
 		left, right = '', ''
 		if not is_visible(obj):
@@ -511,7 +547,7 @@ def generate_member_table(out, name, nav, members, title, name_prefix=""):
 			right += '<a href="#' + obj.link + '"><b>' + obj.name + '</b></a>'
 			if index != -1:
 				right += type[(index+1):] + to_html(obj.args)
-		out.write('<tr class="active"><th class="type-col">' + left + '</th><th class="name-col">' + right + '</th></tr>')
+		out.write('<tr class="active"><td class="type-col">' + left + '</td><td class="name-col">' + right + '</td></tr>')
 	out.write('</tbody></table>')
 
 def templates_to_html(templates):
@@ -588,7 +624,7 @@ def generate_member_list(out, nav, members, name_prefix=""):
 					out.write('()')
 				else:
 					nav.write('( ' + ', '.join(['<span class="arg">'+to_text(arg.type)+'</span>' for arg in obj.args]) + ')')
-					out.write('(<table class="memname"><tbody>')
+					out.write('(<table class="memname params"><tbody>')
 					for arg in obj.args[:-1]:
 						default = ' = '+arg.default_value if arg.default_value != None else ''
 						out.write('<tr><td class="paramtype">' + to_html(arg.type) + '</td><td class="paramname">' + arg.name + '<span class="black">' + default + ',</span></td></tr>')
@@ -611,14 +647,15 @@ def generate_left_nav(out, path, current_sundered_path):
 		child_on_path = on_path and (current_sundered_path[0] == key)
 		if not child_path.is_file():
 			# this is a directory
-			toggler = '<label class="tree-toggler">' + ('-' if child_on_path else '+') + '</label>'
-			tree_ul = '<ul class="tree"' + (' style="display:none"' if not child_on_path else '') + '>'
+			toggler_style = 'tree-toggler' if child_path.is_visible else 'invisible tree-toggler'
+			toggler = '<label class="' + toggler_style + '">' + ('-' if child_on_path else '+') + '</label>'
+			tree_ul = ('<ul class="tree"' + (' style="display:none"' if not child_on_path else '') + '>') if True else ''
 			if 'README.md' in child_path.children:
 				child = child_path.children['README.md']
 				if child_on_path and current_sundered_path[1] == 'README.md':
 					out.write('<li><div class="toc_item active">' + toggler + key + '</div>' + tree_ul)
 				else:
-					link = url_root + os.path.split(child_path.children['README.md'].object[0])[0] + '/index.html'
+					link = url_root + os.path.split(child_path.children['README.md'].object)[0] + '/index.html'
 					out.write('<li><div class="toc_item">' + toggler + '<a href="' + link + '">' + key + '</a></div>' + tree_ul)
 			else:
 				out.write('<li><div class="toc_item">' + toggler + key + '</div>' + tree_ul)
@@ -626,12 +663,12 @@ def generate_left_nav(out, path, current_sundered_path):
 			out.write('</ul></li>')
 		else:
 			# this is a file
-			if child_path.object == None or not has_visible(child_path.object[1].objects):
+			if child_path.object == None or not child_path.is_visible:
 				continue
 			if child_on_path:
 				out.write('<li class="toc_item active">' + key + '</li>')
 			else:
-				link = child_path.object[0] + '.html'
+				link = child_path.object + '.html'
 				out.write('<li class="toc_item"><a href="' + url_root + link + '">' + key + '</a></li>')
 
 def generate_right_nav(out, nav, members):
@@ -652,20 +689,23 @@ def os_path_sunder(path):
 	return parts
 
 class Path:
-	def __init__(self, is_file, object):
+	def __init__(self, is_file, object, is_visible = False):
 		self.children = (None if is_file else {})
 		self.object = object
+		self.is_visible = is_visible
 
 	def is_file(self):
 		return self.children == None
 
-	def add(self, path, object):
+	def add(self, path, object, is_visible):
+		if is_visible:
+			self.is_visible = True
 		if len(path) == 1:
-			self.children[path[0]] = Path(True, object)
+			self.children[path[0]] = Path(True, object, is_visible)
 			return
 		elif path[0] not in self.children:
-			self.children[path[0]] = Path(False, None)
-		self.children[path[0]].add(path[1:], object)
+			self.children[path[0]] = Path(False, None, is_visible)
+		self.children[path[0]].add(path[1:], object, is_visible)
 
 	def get(self, path):
 		if len(path) == 1:
@@ -691,7 +731,7 @@ for key, value in files.items():
 	value.objects.sort(key=lambda obj : obj.location.start)
 	compute_links(value.objects)
 	value.link = url_root + key + '.html'
-	root.add(os_path_sunder(key), (key, value))
+	root.add(os_path_sunder(key), key, has_visible(value.objects))
 
 # generate html output
 for key, value in files.items():
