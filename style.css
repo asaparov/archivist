@@ -1,9 +1,9 @@
 h1, .h1, h2, .h2, h3, .h3{
-	font-weight: 200 !important;
+	font-weight: 400 !important;
 }
 
 body, table, div, p, dl {
-	font: 400 16px/22px 'Titillium Web', sans-serif;
+	font: 400 16px/22px 'Source Sans Pro', sans-serif;
 }
 
 tbody > tr > th {
@@ -13,7 +13,9 @@ tbody > tr > th {
 thead > tr {
 	color: #fff;
 	background-color: #EB3B00;
-	border-top: 2px solid #cfcfcf;
+}
+thead > tr > th {
+	border: none !important;
 }
 
 #navrow1, #navrow2, #navrow3, #navrow4, #navrow5{
@@ -88,16 +90,12 @@ span.black {
 	top: 20px;
 	width: 225px;
 	margin-top: 10px;
-	padding: 5px 5px 5px 20px;
+	padding: 5px 5px 5px 10px;
 	background-color: #f5f5f5;
 }
 
-#toc_title {
-	text-indent: -10px;
-}
-
 nav {
-	font-family: 'Titillium Web', sans-serif;
+	font-family: 'Source Sans Pro', sans-serif;
 	display: none;
 	overflow-x: hidden;
 	overflow-y: auto;
@@ -618,7 +616,6 @@ td.name-col {
 	.params td {
 		display: block;
 		float: left;
-		margin-right: 10px;
 	}
 	.params th.type-col {
 		word-wrap: break-word;

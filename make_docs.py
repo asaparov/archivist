@@ -182,6 +182,8 @@ def to_html(element):
 			link = child.attrib['url']
 			child.attrib.clear()
 			child.attrib['href'] = link
+			if not link.startswith(url_root):
+				child.attrib['target'] = '_blank'
 		elif child.tag == 'ref':
 			ref = child.attrib['refid']
 			if ref in refs:
@@ -259,7 +261,7 @@ def to_html(element):
 		if node.attrib['kind'] == 'templateparam':
 			title.text = 'Template parameters'
 			node.clear()
-			node.attrib['class'] = 'tparams'
+			node.attrib['class'] = 'tparams params'
 		else:
 			title.text = 'Parameters'
 			node.clear()
@@ -575,7 +577,7 @@ def generate_member_list(out, nav, members, name_prefix=""):
 		if isinstance(obj, Class):
 			nav.write('<li><a href="#' + obj.link + '">struct ' + obj.name + '</a>')
 			out.write('<div class="panel panel-default active"><h2>struct ' + obj.name)
-			out.write('<div class="source">[<a href="' + source_link + '">view source</a>]</div></h2>')
+			out.write('<div class="source">[<a href="' + source_link + '" target="_blank">view source</a>]</div></h2>')
 			out.write(templates_to_html(obj.templates))
 			if len(obj.description) > 0:
 				out.write('<p>' + to_html(obj.description) + '</p>')
