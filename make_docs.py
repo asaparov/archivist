@@ -597,7 +597,7 @@ def generate_member_list(out, nav, members, name_prefix=""):
 				typedef += ' ' + name_prefix + obj.name
 			nav.write('<li><a href="#' + obj.link + '">typedef ' + obj.name + '</a>')
 			out.write('<div class="panel panel-default active"><div class="panel-heading">typedef ')
-			out.write(typedef + '<div class="source">[<a href="' + source_link + '">view source</a>]</div></div><div class="panel-body">')
+			out.write(typedef + '<div class="source">[<a href="' + source_link + '" target="_blank">view source</a>]</div></div><div class="panel-body">')
 			out.write(to_html(obj.description))
 			nav.write('</li>')
 			out.write('</div></div>')
@@ -613,7 +613,7 @@ def generate_member_list(out, nav, members, name_prefix=""):
 				type_text = 'static ' + type_text
 			nav.write('<li><a href="#' + obj.link + '">' + ('' if isinstance(obj, Variable) else type_text) + ' ' + obj.name)
 			out.write('<div class="panel panel-default active"><div class="panel-heading">')
-			out.write('<div class="source">[<a href="' + source_link + '">view source</a>]</div>')
+			out.write('<div class="source">[<a href="' + source_link + '" target="_blank">view source</a>]</div>')
 			if isinstance(obj, Function):
 				out.write(templates_to_html(obj.templates))
 			out.write(type + ' ' + name_prefix + obj.name)
@@ -759,7 +759,7 @@ for key, value in files.items():
 	title = filename if filename != 'README.md' else sundered[0]
 	out.write('<div class="title h1">' + title)
 	if filename != 'README.md':
-		out.write('<div class="source">[<a href="' + get_file_link(sundered) + '">view source</a>]</div>')
+		out.write('<div class="source">[<a href="' + get_file_link(sundered) + '" target="_blank">view source</a>]</div>')
 	out.write('</div><div id="embedded_nav"></div>')
 
 	if value.description != None:
