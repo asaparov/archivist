@@ -523,7 +523,7 @@ def generate_member_table(out, name, nav, members, title, name_prefix=""):
 		nav.write('<li><a class="active" href="#' + link + '">File contents</a></li>')
 	else:
 		nav.write('<li><a href="#' + link + '">Members</a></li>')
-	out.write('<a id="' + link + '"></a>')
+	out.write('<a class="anchor" id="' + link + '"></a>')
 	out.write('<table class="table members"><colgroup><col class="type-col" /><col class="name-col" /></colgroup><thead><tr><th colspan="2">' + title + '</th></tr></thead><tbody>')
 	for obj in members:
 		left, right = '', ''
@@ -572,7 +572,7 @@ def generate_member_list(out, nav, members, name_prefix=""):
 	for obj in members:
 		if not is_visible(obj):
 			continue
-		out.write('<a id="' + obj.link + '"></a>')
+		out.write('<a class="anchor" id="' + obj.link + '"></a>')
 		source_link = get_source_link(obj.location)
 		if isinstance(obj, Class):
 			nav.write('<li><a href="#' + obj.link + '">struct ' + obj.name + '</a>')

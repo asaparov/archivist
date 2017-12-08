@@ -29,6 +29,17 @@ thead > tr > th {
 a {
 	color: #039be5 !important;
 }
+.anchor {
+	display: block;
+	position: relative;
+	visibility: hidden;
+	top: 1px;
+}
+@media (max-width: 779px) {
+	.anchor {
+		top: -49px;
+	}
+}
 p {
 	margin-bottom: 15px !important;
 }
@@ -210,7 +221,7 @@ table.params {
 }
 
 pre.codeblock {
-	background-color: #f5f5f5;
+	background-color: #293134;
 	padding: 5px 10px 5px 10px;
 	font-size: 14px;
 }
@@ -461,39 +472,39 @@ div.groupText {
 /* @group Code Colorization */
 
 span.normal {
-	color: #073642;
+	color: #e4deaa;
 }
 
 span.keyword {
-	color: #073642;
+	color: #2b91af;
 	font-weight: 700;
 }
 
 span.keywordtype {
-	color: #073642;
+	color: #ff4747;
 	font-weight: 700;
 }
 
 span.keywordflow {
-	color: #073642;
+	color: #2b91af;
 	font-weight: 700;
 }
 
 span.comment {
-	color: #D30102;
+	color: #808080;
 }
 
 span.preprocessor {
-	color: #073642;
+	color: #e4deaa;
 	font-weight: 700;
 }
 
 span.stringliteral {
-	color: #D30102;
+	color: #f5e20f;
 }
 
 span.charliteral {
-	color: #D30102;
+	color: #baab08;
 }
 
 span.vhdldigit {
