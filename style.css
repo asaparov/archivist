@@ -228,6 +228,13 @@ pre.codeblock {
 pre.codeblock a {
 	color: #2b91af !important;
 }
+@media (max-width: 779px) {
+	pre.codeblock {
+		padding: 10px 25px 10px 25px;
+		margin: 0 -20px 10px -20px;
+		border: none; border-radius: 0;
+	}
+}
 .codeline {
 	font-family: 'Anonymous Pro', monospace;
 }

@@ -182,7 +182,7 @@ def to_html(element):
 			link = child.attrib['url']
 			child.attrib.clear()
 			child.attrib['href'] = link
-			if not link.startswith(url_root):
+			if not link.startswith('#') and not link.startswith(url_root):
 				child.attrib['target'] = '_blank'
 		elif child.tag == 'ref':
 			ref = child.attrib['refid']
@@ -288,7 +288,7 @@ def to_html(element):
 	for heading in headings:
 		heading.tag = 'h' + heading.attrib['level']
 		heading.attrib.clear()
-		anchor = et.SubElement(heading, 'a', {'id':heading.text.strip().replace(' ','-').lower()})
+		anchor = et.SubElement(heading, 'a', {'class':'anchor','id':heading.text.strip().replace(' ','-').lower()})
 		anchor.tail = heading.text
 		heading.text = ''
 
