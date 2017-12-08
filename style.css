@@ -225,6 +225,9 @@ pre.codeblock {
 	padding: 5px 10px 5px 10px;
 	font-size: 14px;
 }
+pre.codeblock a {
+	color: #2b91af !important;
+}
 .codeline {
 	font-family: 'Anonymous Pro', monospace;
 }
