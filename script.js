@@ -23,7 +23,7 @@ rightnav_width = parseInt(rightnav.css('width'));
 toc_width = parseInt(toc.css('width'));
 nav_margin = 35;
 min_pad = 20;
-threshold = 780;
+threshold = 795;
 
 offset = 0
 if (anchors.length > 0)
@@ -32,12 +32,12 @@ prev_nav = 0;
 scrolling = true;
 
 function update_navs(scroll) {
-	doc_width = $(window).width();
+	doc_width = $(window).innerWidth();
 	doc_height = $(window).height();
 	width = Math.min(max_width, doc_width - 2 * (min_pad + nav_margin) - leftnav_width - rightnav_width);
 	left = Math.max(Math.min((doc_width - width) / 2, doc_width - width - nav_margin - rightnav_width - min_pad), min_pad + leftnav_width + nav_margin);
 
-	if (doc_width < threshold) {
+	if (window.matchMedia('(max-width: ' + threshold + 'px)').matches) {
 		if (!is_nav_embedded) {
 			toc.detach().appendTo(embedded_nav);
 			toc.css('width', 'auto');
