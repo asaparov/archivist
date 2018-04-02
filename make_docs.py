@@ -1,5 +1,7 @@
 import os
-from shutil import copyfile
+import hashlib
+import html
+from shutil import copyfile, rmtree
 import xml.etree.ElementTree as et
 from io import StringIO
 
@@ -7,6 +9,7 @@ header_file = 'header.html'
 footer_file = 'footer.html'
 style_file = 'style.css'
 script_file = 'script.js'
+hamburger_file = 'hamburger.svg'
 src_root = os.path.abspath('../') + os.path.sep
 url_root = 'http://asaparov.org/docs/'
 source_file_url = 'https://github.com/asaparov/{0}/blob/master/{1}'
@@ -14,6 +17,13 @@ source_line_url = 'https://github.com/asaparov/{0}/blob/master/{1}#L{2}'
 source_block_url = 'https://github.com/asaparov/{0}/blob/master/{1}#L{2}-L{3}'
 refs = {}	# this map stores all refid's
 
+
+def md5_hash(path):
+	hasher = hashlib.md5()
+	with open(path, 'rb') as f:
+		for block in iter(lambda: f.read(4096), b''):
+			hasher.update(block)
+	return hasher.hexdigest()
 
 def get_path(path):
 	if path.find(src_root) != 0:
@@ -67,9 +77,9 @@ class FunctionParam:
 		self.default_value = default_value
 
 	def to_html(self):
-		string = to_html(self.type) + ' ' + self.name
+		string = to_html(self.type) + ' ' + html.escape(self.name, quote=False)
 		if self.default_value != None:
-			string += ' = ' + self.default_value
+			string += ' = ' + html.escape(self.default_value, quote=False)
 		return string
 
 	def to_text(self):
@@ -318,7 +328,7 @@ def to_html(element):
 	for codeline in codelines:
 		sp_to_spaces(codeline)
 
-	str = element.text if element.text != None else ''
+	str = html.escape(element.text, quote=False) if element.text != None else ''
 	str += ''.join([et.tostring(child, encoding='utf-8', method='html').decode('utf-8') for child in element])
 	return str.strip()
 
@@ -507,7 +517,7 @@ def get_link(obj, name_prefix=""):
 		type = '#define' if obj.type == None else to_text(obj.type)
 		return type + ' ' + name_prefix + obj.name
 	elif isinstance(obj, Typedef):
-		return 'typedef ' + to_text(obj.type) + ' ' + name_prefix + obj.name + to_text(obj.args);
+		return 'typedef ' + to_text(obj.type) + ' ' + name_prefix + obj.name + to_text(obj.args)
 
 def compute_links(members, name_prefix=""):
 	for obj in members:
@@ -560,7 +570,7 @@ def templates_to_html(templates):
 	for template in templates:
 		if 'enable_if' in template.type:
 			continue
-		param = template.type.replace('<','&lt;').replace('>','&gt;')
+		param = html.escape(template.type, quote=False)
 		if template.default_value != None:
 			if template.default_value == 'void':
 				continue
@@ -715,13 +725,17 @@ class Path:
 		else:
 			return self.children[path[0]].get(path[1:])
 
+# clean destination directory
+rmtree('Docs/html', True)
+
 # read the header and footer files
 with open(header_file, 'r') as f:
 	header = f.read()
-	header = header.replace('$style_file', url_root + style_file)
+	header = header.replace('$style_file', url_root + style_file + '?' + md5_hash(style_file))
+	header = header.replace('$hamburger_file', url_root + hamburger_file + '?' + md5_hash(hamburger_file))
 with open(footer_file, 'r') as f:
 	footer = f.read()
-	footer = footer.replace('$script_file', url_root + script_file)
+	footer = footer.replace('$script_file', url_root + script_file + '?' + md5_hash(script_file))
 
 # read 'index.xml'
 files = {}
@@ -786,3 +800,5 @@ for key, value in files.items():
 
 copyfile(style_file, os.path.sep.join(['Docs','html', style_file]))
 copyfile(script_file, os.path.sep.join(['Docs','html', script_file]))
+copyfile(hamburger_file, os.path.sep.join(['Docs','html', hamburger_file]))
+copyfile('critical.css', os.path.sep.join(['Docs','html', 'critical.css']))

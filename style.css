@@ -717,7 +717,6 @@ span.SRScope {
 
 .table > tbody > tr > td.memSeparator {
 	line-height: 0;
-	.table-hover;
 }
 
 .memItemLeft, .memTemplItemLeft {
