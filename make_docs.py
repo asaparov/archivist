@@ -77,9 +77,9 @@ class FunctionParam:
 		self.default_value = default_value
 
 	def to_html(self):
-		string = to_html(self.type) + ' ' + html.escape(self.name, quote=False)
+		string = to_html(self.type) + ' ' + self.name
 		if self.default_value != None:
-			string += ' = ' + html.escape(self.default_value, quote=False)
+			string += ' = ' + self.default_value
 		return string
 
 	def to_text(self):
@@ -336,14 +336,14 @@ def to_text(element):
 	str = ''
 	for child in element.itertext():
 		str += child
-	return str.strip()
+	return html.escape(str.strip(), quote=False)
 
 def parse_function(member):
 	templates, args, template_descriptions, arg_descriptions = [], [], [], []
 	return_type = member.find('type')
 	is_static = (member.attrib['static'] == 'yes')
 	is_const = (member.attrib['const'] == 'yes')
-	function_name = member.find('name').text
+	function_name = html.escape(member.find('name').text, quote=False)
 	function_description = member.find('detaileddescription')
 	location_attrib = member.find('location').attrib
 	if 'bodyfile' in location_attrib:
@@ -353,7 +353,7 @@ def parse_function(member):
 	for template_param in member.findall('templateparamlist/param'):
 		type = template_param.find('type').text
 		declname_element = template_param.find('declname')
-		type += ' '+declname_element.text if declname_element != None else ''
+		type += ' ' + declname_element.text if declname_element != None else ''
 		default_value_element = template_param.find('defval')
 		default_value = default_value_element.text if default_value_element != None else None
 		templates.append(TemplateParam(type, default_value))
@@ -380,7 +380,7 @@ def parse_function(member):
 				node.text = node.text[:var_index]
 				has_array = True
 				break
-		if not has_array:
+		if not has_array and array != '':
 			name += '<span class="black">' + array + '</span>'
 			name_text += array
 		default_value_element = arg.find('defval')
@@ -401,7 +401,7 @@ def parse_compound_name(compound_name):
 	tokens = simple.split('::')
 	name = tokens[-1] + (compound_name[i:] if i != -1 else '')
 	namespace = '::'.join(tokens[:-1])
-	return name, namespace
+	return html.escape(name, quote=False), namespace
 
 def parse_class(ref):
 	tree = et.parse(os.path.sep.join(['Docs','xml', ref + '.xml']))
@@ -420,9 +420,9 @@ def parse_class(ref):
 		default_value = default_value_element.text if default_value_element != None else None
 		templates.append(TemplateParam(type, default_value))
 	for template_description in description_element.findall('parameterlist/parameteritem'):
-		name = template_description.find('parameternamelist/parametername').text
+		tname = template_description.find('parameternamelist/parametername').text
 		description = template_description.find('parameterdescription').text
-		template_descriptions.append(ParamDescription(name, description))
+		template_descriptions.append(ParamDescription(tname, description))
 	for member in tree.findall('compounddef/sectiondef[@kind=\'public-attrib\']/memberdef'):
 		objects.append(parse_variable(member))
 	for member in tree.findall('compounddef/sectiondef[@kind=\'public-func\']/memberdef'):
@@ -546,7 +546,7 @@ def generate_member_table(out, name, nav, members, title, name_prefix=""):
 			left += 'static ' if obj.is_static else ''
 			left += to_html(obj.type) if obj.type != None else ''
 			right += '<a href="#' + obj.link + '"><b>' + obj.name + '</b></a> ('
-			right += ', '.join(['<span class="arg">'+arg.to_html()+'</span>' for arg in obj.args]) + ')'
+			right += ', '.join(['<span class="arg">' + arg.to_html() + '</span>' for arg in obj.args]) + ')'
 			right += ' const' if obj.is_const else ''
 		elif isinstance(obj, Variable):
 			left += '#define' if obj.type == None else to_html(obj.type)
@@ -570,7 +570,7 @@ def templates_to_html(templates):
 	for template in templates:
 		if 'enable_if' in template.type:
 			continue
-		param = html.escape(template.type, quote=False)
+		param = template.type
 		if template.default_value != None:
 			if template.default_value == 'void':
 				continue

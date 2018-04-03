@@ -2,10 +2,6 @@ h1, .h1, h2, .h2, h3, .h3{
 	font-weight: 400 !important;
 }
 
-body, table, div, p, dl {
-	font: 400 16px/22px 'Source Sans Pro', sans-serif;
-}
-
 tbody > tr > th {
 	font-weight: normal;
 }

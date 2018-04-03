@@ -35,7 +35,7 @@ gulp.task('build:styles:critical', function() {
           autoprefixer({ browsers: ['last 2 versions'] }),
           fontMagician({
             variants: {
-              'Source Sans Pro': { '300': ['woff, woff2'], '400': ['woff, woff2'], '400 italic': ['woff, woff2'], '700': ['woff, woff2'] },
+              'Source Sans Pro': { '300': ['woff, woff2'], '400': ['woff, woff2'], '400i': ['woff, woff2'], '700': ['woff, woff2'] },
               'Anonymous Pro': { '400': ['woff, woff2'], '700': ['woff, woff2'] }
             }
           })
@@ -134,18 +134,24 @@ gulp.task('clean:fonts', function(callback) {
 
 gulp.task('html', function() {
     gulp.src(paths.srcHtmlFolderName + '/**/*.html')
-        .pipe(inliner({ rootpath:paths.srcHtmlFolderName }))
+        .pipe(inliner({ rootpath : paths.srcHtmlFolderName }))
         .pipe(htmlmin({collapseWhitespace: true}))
         .pipe(gulp.dest(paths.siteDir));
 });
 
+gulp.task('build:docs:html', function() {
+    return gulp.src('')
+        .pipe(run('python make_docs.py'))
+        .on('error', gutil.log);
+});
+
 // Deletes the entire _site directory.
-gulp.task('clean:dir', function(callback) {
-    del([paths.siteDir]);
+gulp.task('clean:docs', function(callback) {
+    del([paths.srcHtmlFolderName, paths.siteDir]);
     callback();
 });
 
-gulp.task('clean', ['clean:dir',
+gulp.task('clean', ['clean:docs',
     'clean:fonts',
     'clean:images',
     'clean:assets',
@@ -154,7 +160,7 @@ gulp.task('clean', ['clean:dir',
 
 // Builds site anew.
 gulp.task('build', function(callback) {
-    runSequence('clean',
+    runSequence('clean', 'build:docs:html',
         ['build:scripts', 'build:images', 'build:assets', 'build:styles', 'build:fonts'],
         'html', callback);
 });

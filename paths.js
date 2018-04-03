@@ -12,10 +12,11 @@ paths.imageFolderName     = '';
 paths.srcAssetFolderName  = 'Docs/html';
 paths.assetFolderName     = '';
 paths.srcScriptFolderName = 'Docs/html';
-paths.scriptFolderName    = 'js';
+paths.scriptFolderName    = '';
 paths.srcStylesFolderName = 'Docs/html';
-paths.stylesFolderName    = 'css';
+paths.stylesFolderName    = '';
 paths.srcHtmlFolderName   = 'Docs/html';
+paths.srcXmlFolderName    = 'Docs/xml';
 
 // Asset files locations.
 paths.cssFiles    = paths.assetsDir + paths.srcStylesFolderName;
