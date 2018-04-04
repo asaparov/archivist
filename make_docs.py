@@ -729,13 +729,17 @@ class Path:
 rmtree('Docs/html', True)
 
 # read the header and footer files
+style_hash = md5_hash(style_file)
+script_hash = md5_hash(script_file)
+hamburger_hash = md5_hash(hamburger_file)
 with open(header_file, 'r') as f:
 	header = f.read()
-	header = header.replace('$style_file', url_root + style_file + '?' + md5_hash(style_file))
-	header = header.replace('$hamburger_file', url_root + hamburger_file + '?' + md5_hash(hamburger_file))
+	header = header.replace('$style_file', url_root + style_file + '?' + style_hash)
+	header = header.replace('$hamburger_file', url_root + hamburger_file + '?' + hamburger_hash)
 with open(footer_file, 'r') as f:
 	footer = f.read()
-	footer = footer.replace('$script_file', url_root + script_file + '?' + md5_hash(script_file))
+	footer = footer.replace('$script_file', url_root + script_file + '?' + script_hash)
+	footer = footer.replace('$style_file', url_root + style_file + '?' + style_hash)
 
 # read 'index.xml'
 files = {}
