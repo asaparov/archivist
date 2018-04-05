@@ -10,6 +10,7 @@ body, table, div, p, dl {
 
 body {
 	margin: 0;
+	color: #333;
 }
 
 a {
@@ -53,6 +54,7 @@ h1, .h1, h2, .h2, h3, .h3 {
 
 pre {
 	line-height: 1.42857143;
+	overflow: auto;
 }
 
 table {
@@ -65,6 +67,7 @@ table {
 	padding: 8px;
 	line-height: 1.42857143;
 	border-top: 1px solid #ddd;
+	vertical-align: top;
 }
 
 .table > thead > tr > td, .table > thead > tr > th {
@@ -72,6 +75,7 @@ table {
 	background-color: #EB3B00;
 	padding: 8px;
 	line-height: 1.42857143;
+	vertical-align: top;
 }
 
 th {
