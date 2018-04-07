@@ -549,6 +549,11 @@ span.SRScope {
 	padding: 7px 8px 6px 8px;
 }
 
+.table {
+	width: 100%;
+	max-width: 100%;
+}
+
 .table > tbody > tr.heading > td {
 	border-top: none !important;
 }
