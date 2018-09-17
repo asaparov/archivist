@@ -17,6 +17,7 @@ var uglify          = require('gulp-uglify');
 var htmlmin         = require('gulp-htmlmin');
 var inliner         = require('gulp-inline-source');
 var fontMagician    = require('postcss-font-magician');
+var cp              = require('child_process');
 
 var paths           = require('./paths');
 
@@ -139,6 +140,11 @@ gulp.task('html', function() {
         .pipe(gulp.dest(paths.siteDir));
 });
 
+gulp.task('build:docs:xml', function (callback) {
+    cp.execSync('doxygen Doxyfile', {stdio:[0,1,2]});
+    callback();
+});
+
 gulp.task('build:docs:html', function() {
     return gulp.src('')
         .pipe(run('python make_docs.py'))
@@ -147,7 +153,7 @@ gulp.task('build:docs:html', function() {
 
 // Deletes the entire _site directory.
 gulp.task('clean:docs', function(callback) {
-    del([paths.srcHtmlFolderName, paths.siteDir]);
+    del([paths.srcXmlFolderName, paths.srcHtmlFolderName, paths.siteDir]);
     callback();
 });
 
@@ -160,7 +166,7 @@ gulp.task('clean', ['clean:docs',
 
 // Builds site anew.
 gulp.task('build', function(callback) {
-    runSequence('clean', 'build:docs:html',
+    runSequence('clean', 'build:docs:xml', 'build:docs:html',
         ['build:scripts', 'build:images', 'build:assets', 'build:styles', 'build:fonts'],
         'html', callback);
 });
