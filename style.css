@@ -69,6 +69,7 @@ table.params {
 	font-size: 16px;
 	text-indent: -40px;
 	padding-left: 40px;
+	margin-bottom: 15px;
 }
 
 pre.codeblock {
@@ -408,6 +409,9 @@ td.paraminfoname {
 	border-radius: 0 !important;
 	padding: 15px 0 10px 0;
 }
+.panel-first {
+	border-top: 0 !important;
+}
 .panel-heading {
 	font-size: 18px;
 	font-family: 'Anonymous Pro', monospace;
@@ -553,11 +557,11 @@ span.SRScope {
 	max-width: 100%;
 }
 
-.table > tbody > tr.heading > td {
+.table tr.heading > td {
 	border-top: none !important;
 }
 
-.table > tbody > tr > td.memSeparator {
+.table tr > td.memSeparator {
 	line-height: 0;
 }
 

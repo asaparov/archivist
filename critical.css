@@ -1,5 +1,6 @@
 body, table, div, p, dl {
 	font: 400 16px/22px 'Source Sans Pro', sans-serif;
+	text-size-adjust: none;
 }
 
 * {
@@ -62,15 +63,16 @@ table {
 	border-collapse: collapse;
 }
 
-.table > tbody > tr > td, .table > tbody > tr > th {
+.table tr > td {
 	background-color: #f5f5f5;
 	padding: 8px;
 	line-height: 1.42857143;
 	border-top: 1px solid #ddd;
+	border-bottom: 1px solid #ddd;
 	vertical-align: top;
 }
 
-.table > thead > tr > td, .table > thead > tr > th {
+.table tr > th {
 	color: #fff;
 	background-color: #EB3B00;
 	padding: 8px;
@@ -84,10 +86,6 @@ th {
 
 td, th {
 	padding: 0;
-}
-
-tbody > tr > th {
-	font-weight: normal;
 }
 
 code {
@@ -218,6 +216,7 @@ nav li {
 #toc li > a {
 	color: #000 !important;
 	font-size: 11pt;
+	display: inline-block;
 }
 #toc li > a:hover {
 	color: #039be5 !important;
@@ -228,7 +227,7 @@ nav li {
 }
 
 #toc > ul > li {
-	text-indent: -20px;
+	text-indent: -10px;
 }
 
 nav .toc_item > a {

@@ -82,13 +82,14 @@ function update_navs(scroll) {
 	}
 
 	leftnav_x = left - nav_margin - leftnav_width;
+	offset = document.documentElement.clientWidth - window.innerWidth - window.pageXOffset;
 	if (leftnav_x <= min_pad) {
-		leftnav.css('left', min_pad);
+		leftnav.css('right', doc_width - min_pad - leftnav_width - offset);
 		rightnav.css('left', leftnav_width + min_pad + width + 2 * nav_margin);
 		contents.css('width', width);
 		contents.css('margin-left', leftnav_width + nav_margin + min_pad);
 	} else {
-		leftnav.css('left', leftnav_x);
+		leftnav.css('right', doc_width - left + nav_margin - offset);
 		rightnav.css('left', left + width + nav_margin);
 		contents.css('width', max_width);
 		contents.css('margin-left', 'auto');
@@ -114,6 +115,15 @@ $(window).resize(function() {
 });
 
 $(window).scroll(function() {
+	left = Math.max(Math.min((doc_width - width) / 2, doc_width - width - nav_margin - rightnav_width - min_pad), min_pad + leftnav_width + nav_margin);
+	if (window.matchMedia('(max-width: ' + threshold + 'px)').matches)
+		left = min_pad;
+	leftnav_x = left - nav_margin - leftnav_width;
+	offset = document.documentElement.clientWidth - window.innerWidth - window.pageXOffset;
+	if (leftnav_x <= min_pad)
+		leftnav.css('right', doc_width - min_pad - leftnav_width - offset);
+	else leftnav.css('right', doc_width - left + nav_margin - offset);
+
 	if (!scrolling) return;
 
 	i = 0;

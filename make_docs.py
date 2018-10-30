@@ -1,6 +1,7 @@
 import os
 import hashlib
 import html
+import urllib.parse
 from shutil import copyfile, rmtree
 import xml.etree.ElementTree as et
 from io import StringIO
@@ -88,17 +89,21 @@ class FunctionParam:
 			string += ' = ' + self.default_value
 		return string
 
+	def to_htmltext(self):
+		return htmlescape(self.to_text())
+
 class ParamDescription:
 	def __init__(self, name, description):
 		self.name = name
 		self.description = description
 
 class Function:
-	def __init__(self, type, name, is_static, is_const, templates, args, description, template_descriptions, arg_descriptions, location):
+	def __init__(self, type, name, name_text, is_static, is_const, templates, args, description, template_descriptions, arg_descriptions, location):
 		self.type = type
 		if name.find('operator') == 0:
 			name = 'operator ' + name[len('operator'):]
 		self.name = name
+		self.name_text = name_text
 		self.is_static = is_static
 		self.is_const = is_const
 		self.templates = templates
@@ -110,8 +115,9 @@ class Function:
 		self.link = None
 
 class Class:
-	def __init__(self, name, namespace, templates, description, template_descriptions, objects, location):
+	def __init__(self, name, name_text, namespace, templates, description, template_descriptions, objects, location):
 		self.name = name
+		self.name_text = name_text
 		self.namespace = namespace
 		self.templates = templates
 		self.description = description
@@ -173,11 +179,20 @@ def sp_to_spaces(element):
 			if last.tail == None:
 				last.tail = ''
 
+def iterparent(tree):
+	yield None, tree
+	for parent in tree.iter():
+		for child in parent:
+			yield parent, child
+
 def to_html(element):
 	# convert all XML tags into HTML tags, without changing the tree structure
-	parameter_lists, codelines, headings, tables, simplesects = [], [], [], [], {}
-	for child in element.iter():
+	parameter_lists, codelines, headings, tables, to_remove, simplesects, parents = [], [], [], [], set(), {}, {}
+	for parent, child in iterparent(element):
+		parents[child] = parent
 		if child.tag == 'para':
+			if child.find('.//para'):
+				to_remove.add(child)
 			child.tag = 'p'
 		elif child.tag == 'emphasis':
 			child.tag = 'i'
@@ -213,7 +228,7 @@ def to_html(element):
 		elif child.tag == 'parameteritem':
 			child.tag = 'tr'
 		elif child.tag == 'parameternamelist':
-			text = to_text(child)
+			text = to_htmltext(child)
 			child.clear()
 			child.tag = 'td'
 			child.attrib['class'] = 'paraminfoname'
@@ -263,11 +278,36 @@ def to_html(element):
 			if is_head:
 				child.attrib['class'] = 'thead'
 
-	# transform the parameter list into a table, move all children into a tbody node
+	for node in to_remove:
+		children = list(node)
+		parent = parents[node]
+		siblings = list(parent)
+		index = siblings.index(node)
+		text = ('' if node.text == None else node.text) + ('' if node.tail == None else node.tail)
+		if index == 0:
+			if parent.text == None:
+				parent.text = text
+			else:
+				parent.text += text
+		else:
+			prev = siblings[index - 1]
+			if prev.tail == None:
+				prev.tail = text
+			else:
+				prev.tail += text
+
+		for succ in siblings[index:]:
+			parent.remove(succ)
+		parent.extend(children)
+		parent.extend(siblings[index+1:])
+
+		for child in children:
+			parents[child] = parent
+
+	# transform the parameter list into a table
 	for node in parameter_lists:
 		children = list(node)
-		tbody = et.Element('tbody')
-		title = et.SubElement(tbody, 'th', {'colspan':'2', 'class':'paramtitle'})
+		title = et.SubElement(node, 'th', {'colspan':'2', 'class':'paramtitle'})
 		if node.attrib['kind'] == 'templateparam':
 			title.text = 'Template parameters'
 			node.clear()
@@ -277,17 +317,14 @@ def to_html(element):
 			node.clear()
 			node.attrib['class'] = 'params'
 
-		for child in children:
-			tbody.append(child)
-		node.append(tbody)
+		node.extend(children)
 
 	# put tables in a div to enable overflow
 	for table in tables:
 		children = list(table)
 		new_table = et.Element('table')
 		new_table.attrib['class'] = 'table table-striped table-bordered'
-		for child in children:
-			new_table.append(child)
+		new_table.extend(children)
 		table.clear()
 		table.append(new_table)
 
@@ -303,8 +340,6 @@ def to_html(element):
 		heading.text = ''
 
 	for kind,sections in simplesects.items():
-		parent = element[0]
-
 		first = sections[0]
 		children = list(first)
 		first.clear()
@@ -316,34 +351,43 @@ def to_html(element):
 		elif kind == 'see':
 			title.text = 'See'
 		first_return = et.SubElement(first, 'span', {'class':'return'})
-		for child in children:
-			first_return.append(child)
+		first_return.extend(children)
 
 		for other in sections[1:]:
 			other.tag = 'span'
 			other.attrib['class'] = kind
-			parent.remove(other)
+			parents[other].remove(other)
 			first.append(other)
 
 	for codeline in codelines:
 		sp_to_spaces(codeline)
 
-	str = html.escape(element.text, quote=False) if element.text != None else ''
+	str = htmlescape(element.text) if element.text != None else ''
 	str += ''.join([et.tostring(child, encoding='utf-8', method='html').decode('utf-8') for child in element])
 	return str.strip()
+
+def urlescape(str):
+	return str.replace(' ', '%20').replace('<','%3C').replace('>','%3E')
+
+def htmlescape(str):
+	return html.escape(str, quote=False)
 
 def to_text(element):
 	str = ''
 	for child in element.itertext():
 		str += child
-	return html.escape(str.strip(), quote=False)
+	return str.strip()
+
+def to_htmltext(element):
+	return htmlescape(to_text(element))
 
 def parse_function(member):
 	templates, args, template_descriptions, arg_descriptions = [], [], [], []
 	return_type = member.find('type')
 	is_static = (member.attrib['static'] == 'yes')
 	is_const = (member.attrib['const'] == 'yes')
-	function_name = html.escape(member.find('name').text, quote=False)
+	function_name_text = member.find('name').text
+	function_name = htmlescape(function_name_text)
 	function_description = member.find('detaileddescription')
 	location_attrib = member.find('location').attrib
 	if 'bodyfile' in location_attrib:
@@ -363,10 +407,18 @@ def parse_function(member):
 		template_descriptions.append(ParamDescription(name, description))
 	for arg in member.findall('param'):
 		type = arg.find('type')
-		name_element = arg.find('declname')
-		if type == 'void' and name_element == None:
+		declname = arg.find('declname')
+		if type == 'void' and declname == None:
 			continue
-		name = name_text = name_element.text if name_element != None else ''
+		defname = arg.find('defname')
+		if defname != None:
+			name = name_text = defname.text
+			if declname != None:
+				type.text += ' ' + declname.text
+		elif declname != None:
+			name = name_text = declname.text
+		else:
+			name = name_text = ''
 		array_element = arg.find('array')
 		array = array_element.text if array_element != None else ''
 		has_array = False
@@ -390,7 +442,7 @@ def parse_function(member):
 		name = template_description.find('parameternamelist/parametername').text
 		description = template_description.find('parameterdescription').text
 		arg_descriptions.append(ParamDescription(name, description))
-	function = Function(return_type, function_name, is_static, is_const, templates, args, function_description, template_descriptions, arg_descriptions, location)
+	function = Function(return_type, function_name, function_name_text, is_static, is_const, templates, args, function_description, template_descriptions, arg_descriptions, location)
 	if 'id' in member.attrib:
 		refs[member.attrib['id']] = function
 	return function
@@ -401,13 +453,13 @@ def parse_compound_name(compound_name):
 	tokens = simple.split('::')
 	name = tokens[-1] + (compound_name[i:] if i != -1 else '')
 	namespace = '::'.join(tokens[:-1])
-	return html.escape(name, quote=False), namespace
+	return htmlescape(name), name, namespace
 
 def parse_class(ref):
 	tree = et.parse(os.path.sep.join(['Docs','xml', ref + '.xml']))
 	templates, template_descriptions, objects = [], [], []
 
-	name, namespace = parse_compound_name(tree.find('compounddef/compoundname').text)
+	name, name_text, namespace = parse_compound_name(tree.find('compounddef/compoundname').text)
 	description_element = tree.find('compounddef/detaileddescription')
 	class_description = description_element
 	location_attrib = tree.find('compounddef/location').attrib
@@ -431,7 +483,7 @@ def parse_class(ref):
 		objects.append(parse_function(member))
 	for member in tree.findall('compounddef/sectiondef[@kind=\'public-type\']/memberdef'):
 		objects.append(parse_typedef(member))
-	cls = Class(name, namespace, templates, class_description, template_descriptions, objects, location)
+	cls = Class(name, name_text, namespace, templates, class_description, template_descriptions, objects, location)
 	refs[ref] = cls
 	return cls
 
@@ -507,17 +559,17 @@ def has_visible(members):
 
 def get_link(obj, name_prefix=""):
 	if isinstance(obj, Class):
-		return 'struct ' + name_prefix + obj.name
+		return urlescape('struct ' + name_prefix + obj.name_text)
 	elif isinstance(obj, Function):
 		type = obj.type if obj.type != None else ''
 		args = ','.join(arg.to_text() for arg in obj.args)
 		const = ' const' if obj.is_const else ''
-		return to_text(type) + ' ' + name_prefix + obj.name + '(' + args + ')' + const
+		return urlescape(to_text(type) + ' ' + name_prefix + urlescape(obj.name_text) + '(' + args + ')' + const)
 	elif isinstance(obj, Variable):
 		type = '#define' if obj.type == None else to_text(obj.type)
-		return type + ' ' + name_prefix + obj.name
+		return urlescape(type + ' ' + name_prefix + obj.name)
 	elif isinstance(obj, Typedef):
-		return 'typedef ' + to_text(obj.type) + ' ' + name_prefix + obj.name + to_text(obj.args)
+		return urlescape('typedef ' + to_text(obj.type) + ' ' + name_prefix + obj.name + to_text(obj.args))
 
 def compute_links(members, name_prefix=""):
 	for obj in members:
@@ -525,7 +577,7 @@ def compute_links(members, name_prefix=""):
 			continue
 		obj.link = get_link(obj, name_prefix)
 		if isinstance(obj, Class):
-			compute_links(obj.objects, obj.name + "::")
+			compute_links(obj.objects, obj.name_text + "::")
 
 def generate_member_table(out, name, nav, members, title, name_prefix=""):
 	link = 'table_' + name_prefix
@@ -534,7 +586,7 @@ def generate_member_table(out, name, nav, members, title, name_prefix=""):
 	else:
 		nav.write('<li><a href="#' + link + '">Members</a></li>')
 	out.write('<a class="anchor" id="' + link + '"></a>')
-	out.write('<table class="table members"><colgroup><col class="type-col" /><col class="name-col" /></colgroup><thead><tr><th colspan="2">' + title + '</th></tr></thead><tbody>')
+	out.write('<table class="table members"><colgroup><col class="type-col" /><col class="name-col" /></colgroup><tr><th colspan="2">' + title + '</th></tr>')
 	for obj in members:
 		left, right = '', ''
 		if not is_visible(obj):
@@ -560,7 +612,7 @@ def generate_member_table(out, name, nav, members, title, name_prefix=""):
 			if index != -1:
 				right += type[(index+1):] + to_html(obj.args)
 		out.write('<tr class="active"><td class="type-col">' + left + '</td><td class="name-col">' + right + '</td></tr>')
-	out.write('</tbody></table>')
+	out.write('</table>')
 
 def templates_to_html(templates):
 	if len(templates) == 0:
@@ -579,18 +631,22 @@ def templates_to_html(templates):
 	return '<div class="template">template&lt;' + ', '.join(params) + '&gt;</div>'
 
 def generate_member_list(out, nav, members, name_prefix=""):
+	is_first = True
 	for obj in members:
 		if not is_visible(obj):
 			continue
 		out.write('<a class="anchor" id="' + obj.link + '"></a>')
 		source_link = get_source_link(obj.location)
+		panel_classes = 'panel panel-default panel-first active' if is_first else 'panel panel-default active'
+		is_first = False
 		if isinstance(obj, Class):
 			nav.write('<li><a href="#' + obj.link + '">struct ' + obj.name + '</a>')
-			out.write('<div class="panel panel-default active"><h2>struct ' + obj.name)
+			out.write('<div class="' + panel_classes + '"><h2>struct ' + obj.name)
 			out.write('<div class="source">[<a href="' + source_link + '" target="_blank">view source</a>]</div></h2>')
 			out.write(templates_to_html(obj.templates))
-			if len(obj.description) > 0:
-				out.write('<p>' + to_html(obj.description) + '</p>')
+			description = to_html(obj.description)
+			if len(description) > 0:
+				out.write(description)
 			if has_visible(obj.objects):
 				nav.write('<ul>')
 				namespace = name_prefix + obj.name + "::"
@@ -606,7 +662,7 @@ def generate_member_list(out, nav, members, name_prefix=""):
 			else:
 				typedef += ' ' + name_prefix + obj.name
 			nav.write('<li><a href="#' + obj.link + '">typedef ' + obj.name + '</a>')
-			out.write('<div class="panel panel-default active"><div class="panel-heading">typedef ')
+			out.write('<div class="' + panel_classes + '"><div class="panel-heading">typedef ')
 			out.write(typedef + '<div class="source">[<a href="' + source_link + '" target="_blank">view source</a>]</div></div><div class="panel-body">')
 			out.write(to_html(obj.description))
 			nav.write('</li>')
@@ -617,12 +673,12 @@ def generate_member_list(out, nav, members, name_prefix=""):
 				type_text = type
 			else:
 				type = to_html(obj.type)
-				type_text = to_text(obj.type)
+				type_text = to_htmltext(obj.type)
 			if isinstance(obj, Function) and obj.is_static:
 				type = 'static ' + type
 				type_text = 'static ' + type_text
 			nav.write('<li><a href="#' + obj.link + '">' + ('' if isinstance(obj, Variable) else type_text) + ' ' + obj.name)
-			out.write('<div class="panel panel-default active"><div class="panel-heading">')
+			out.write('<div class="' + panel_classes + '"><div class="panel-heading">')
 			out.write('<div class="source">[<a href="' + source_link + '" target="_blank">view source</a>]</div>')
 			if isinstance(obj, Function):
 				out.write(templates_to_html(obj.templates))
@@ -635,15 +691,15 @@ def generate_member_list(out, nav, members, name_prefix=""):
 					nav.write('()')
 					out.write('()')
 				else:
-					nav.write('( ' + ', '.join(['<span class="arg">'+to_text(arg.type)+'</span>' for arg in obj.args]) + ')')
-					out.write('(<table class="memname params"><tbody>')
+					nav.write('( ' + ', '.join(['<span class="arg">'+to_htmltext(arg.type)+'</span>' for arg in obj.args]) + ')')
+					out.write('(<table class="memname params">')
 					for arg in obj.args[:-1]:
 						default = ' = '+arg.default_value if arg.default_value != None else ''
 						out.write('<tr><td class="paramtype">' + to_html(arg.type) + '</td><td class="paramname">' + arg.name + '<span class="black">' + default + ',</span></td></tr>')
 					default = '<span class="black"> = '+obj.args[-1].default_value+'</span>' if obj.args[-1].default_value != None else ''
 					const = ' const' if obj.is_const else ''
 					out.write('<tr><td class="paramtype">' + to_html(obj.args[-1].type) + '</td><td class="paramname">' + obj.args[-1].name + default + '</td><td>)' + const + '</td></tr>')
-					out.write('</tbody></table>')
+					out.write('</table>')
 			elif isinstance(obj, Variable):
 				if obj.initializer != None:
 					out.write(' ' + obj.initializer)
