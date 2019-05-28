@@ -1,5 +1,5 @@
 
-`make_docs.py` is a script that converts XML output from [Doxygen](http://www.stack.nl/~dimitri/doxygen/) into static HTML webpages. As an example, the C++ documentation webpages for [my projects](http://asaparov.org/docs/core/) were generated using this script. I modeled the theme after [Google's Protocol Buffer API reference](https://developers.google.com/protocol-buffers/docs/reference/cpp/).
+`make_docs.py` is a script that converts XML output from [Doxygen](http://www.stack.nl/~dimitri/doxygen/) into static HTML webpages. As an example, the C++ documentation webpages for [my projects](https://asaparov.org/docs/core/) were generated using this script. I modeled the theme after [Google's Protocol Buffer API reference](https://developers.google.com/protocol-buffers/docs/reference/cpp/).
 
 For convenience, I also added a `gulpfile.js` to streamline the process and further compile/compress the output HTML.
 
