@@ -22,7 +22,7 @@ var paths			= require('./paths');
 
 gulp.task('build:styles:main', function() {
 	return gulp.src(paths.cssFiles + '/style.css')
-		.pipe(postcss([ autoprefixer({ browsers: ['last 2 versions'] }) ]))
+		.pipe(postcss([ autoprefixer({ overrideBrowserslist: ['last 2 versions'] }) ]))
 		.pipe(cleancss())
 		.pipe(gulp.dest(paths.siteCssFiles))
 		.on('error', gutil.log);
@@ -32,7 +32,7 @@ gulp.task('build:styles:main', function() {
 gulp.task('build:styles:critical', function() {
 	return gulp.src(paths.cssFiles + '/critical.css')
 		.pipe(postcss([
-			autoprefixer({ browsers: ['last 2 versions'] }),
+			autoprefixer({ overrideBrowserslist: ['last 2 versions'] }),
 			fontMagician({
 				variants: {
 					'Source Sans Pro': { '300': ['woff, woff2'], '400': ['woff, woff2'], '400i': ['woff, woff2'], '700': ['woff, woff2'] },
