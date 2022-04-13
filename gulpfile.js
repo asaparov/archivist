@@ -1,36 +1,35 @@
 // Define variables.
-var autoprefixer	= require('autoprefixer');
-var cleancss		= require('gulp-clean-css');
-var concat			= require('gulp-concat');
-var del				= require('del');
-var gulp			= require('gulp');
-var gutil			= require('gulp-util');
-var imagemin		= require('gulp-imagemin');
-var imageminMozjpeg	= require('imagemin-mozjpeg');
-var notify			= require('gulp-notify');
-var postcss			= require('gulp-postcss');
-var rename			= require('gulp-rename');
-var run				= require('gulp-run');
-var sass			= require('gulp-ruby-sass');
-var uglify			= require('gulp-uglify');
-var htmlmin			= require('gulp-htmlmin');
-var inliner			= require('gulp-inline-source');
-var fontMagician	= require('postcss-font-magician');
-var cp				= require('child_process');
+import autoprefixer			from 'autoprefixer';
+import cleancss				from 'gulp-clean-css';
+import concat				from 'gulp-concat';
+import del					from 'del';
+import gulp					from 'gulp';
+const {src, dest, series, parallel} = gulp;
+import log					from 'fancy-log';
+import imagemin, {mozjpeg}	from 'gulp-imagemin';
+import notify				from 'gulp-notify';
+import postcss				from 'gulp-postcss';
+import rename				from 'gulp-rename';
+import run					from 'gulp-run';
+import uglify				from 'gulp-uglify';
+import htmlmin				from 'gulp-htmlmin';
+import inliner				from 'gulp-inline-source';
+import fontMagician			from 'postcss-font-magician';
+import cp					from 'child_process';
 
-var paths			= require('./paths');
+import {paths}				from './paths.js';
 
-gulp.task('build:styles:main', function() {
-	return gulp.src(paths.cssFiles + '/style.css')
+function build_styles_main() {
+	return src(paths.cssFiles + '/style.css')
 		.pipe(postcss([ autoprefixer({ overrideBrowserslist: ['last 2 versions'] }) ]))
 		.pipe(cleancss())
-		.pipe(gulp.dest(paths.siteCssFiles))
-		.on('error', gutil.log);
-});
+		.pipe(dest(paths.siteCssFiles))
+		.on('error', log.error);
+}
 
 // Processes critical CSS, to be included in head.html.
-gulp.task('build:styles:critical', function() {
-	return gulp.src(paths.cssFiles + '/critical.css')
+function build_styles_critical() {
+	return src(paths.cssFiles + '/critical.css')
 		.pipe(postcss([
 			autoprefixer({ overrideBrowserslist: ['last 2 versions'] }),
 			fontMagician({
@@ -41,122 +40,122 @@ gulp.task('build:styles:critical', function() {
 			})
 		])).pipe(cleancss())
 		.pipe(concat('compiled_critical.css'))
-		.pipe(gulp.dest(paths.cssFiles))
-		.on('error', gutil.log);
-});
+		.pipe(dest(paths.cssFiles))
+		.on('error', log.error);
+}
 
 // Builds all styles.
-gulp.task('build:styles', gulp.parallel('build:styles:main', 'build:styles:critical'));
+const build_styles = parallel(build_styles_main, build_styles_critical);
 
-gulp.task('clean:styles', function(callback) {
-	del([paths.siteCssFiles + '/style.css',
+function clean_styles(callback) {
+	return del([paths.siteCssFiles + '/style.css',
 		paths.cssFiles + '/compiled_critical.css'
 	]).then(function(result) {callback();});
-});
+}
 
 // Concatenates and uglifies global JS files and outputs result to the
 // appropriate location.
-gulp.task('build:scripts:global', function() {
-	return gulp.src([
+function build_scripts_global() {
+	return src([
 		paths.jsFiles + '/lib' + paths.jsPattern,
 		paths.jsFiles + '/*.js'
 	])
 		.pipe(concat('script.js'))
-		.pipe(uglify()).on('error', function (err) { gutil.log(gutil.colors.red('[Error]'), err.toString()); })
-		.pipe(gulp.dest(paths.siteJsFiles))
-		.on('error', gutil.log);
-});
+		.pipe(uglify()).on('error', function (err) { log.error(err.toString()); })
+		.pipe(dest(paths.siteJsFiles))
+		.on('error', log.error);
+}
 
-gulp.task('clean:scripts', function(callback) {
-	del([paths.siteJsFiles + '/script.js'])
+function clean_scripts(callback) {
+	return del([paths.siteJsFiles + '/script.js'])
 		.then(function(result) {callback();});
-});
+}
 
 // Builds all scripts.
-gulp.task('build:scripts', gulp.parallel('build:scripts:global'));
+const build_scripts = parallel(build_scripts_global);
 
 // Optimizes and copies image files.
-gulp.task('build:images', function() {
-	return gulp.src(paths.imageFilesGlob)
-		.pipe(imagemin([ imageminMozjpeg({ quality: 70 }) ]))
-		.pipe(gulp.dest(paths.siteImageFiles));
-});
+function build_images() {
+	return src(paths.imageFilesGlob)
+		.pipe(imagemin([ mozjpeg({ quality: 70 }) ]))
+		.pipe(dest(paths.siteImageFiles));
+}
 
-gulp.task('clean:images', function(callback) {
-	del([paths.siteImageFiles])
+function clean_images(callback) {
+	return del([paths.siteImageFiles])
 		.then(function(result) {callback();});
-});
+}
 
-gulp.task('build:assets', function() {
-	return gulp.src(paths.assetFilesGlob)
-		.pipe(gulp.dest(paths.siteAssetFiles));
-});
+function build_assets() {
+	return src(paths.assetFilesGlob)
+		.pipe(dest(paths.siteAssetFiles));
+}
 
-gulp.task('clean:assets', function(callback) {
-	del([paths.siteAssetFiles])
+function clean_assets(callback) {
+	return del([paths.siteAssetFiles])
 		.then(function(result) {callback();});
-});
+}
 
 // Places Font Awesome fonts in proper location.
-gulp.task('fontawesome', function() {
-	return gulp.src(paths.fontFiles + '/font-awesome/**.*')
+function fontawesome() {
+	return src(paths.fontFiles + '/font-awesome/**.*')
 		.pipe(rename(function(path) {path.dirname = '';}))
-		.pipe(gulp.dest(paths.siteFontFiles))
-		.on('error', gutil.log);
-});
+		.pipe(dest(paths.siteFontFiles))
+		.on('error', log.error);
+}
 
 // Copies fonts.
-gulp.task('build:fonts', gulp.series('fontawesome'));
+const build_fonts = series(fontawesome);
 
-gulp.task('clean:fonts', function(callback) {
-	del([paths.siteFontFiles])
+function clean_fonts(callback) {
+	return del([paths.siteFontFiles])
 		.then(function(result) {callback();});
-});
+}
 
-gulp.task('html', function() {
-	return gulp.src(paths.srcHtmlFolderName + '/**/*.html')
+function html() {
+	return src(paths.srcHtmlFolderName + '/**/*.html')
 		.pipe(inliner({ rootpath : paths.srcHtmlFolderName }))
 		.pipe(htmlmin({collapseWhitespace: true}))
-		.pipe(gulp.dest(paths.siteDir));
-});
+		.pipe(dest(paths.siteDir));
+}
 
-gulp.task('build:docs:xml', function (callback) {
+function build_docs_xml(callback) {
 	cp.execSync('doxygen Doxyfile', {stdio:[0,1,2]});
 	callback();
-});
+}
 
-gulp.task('build:docs:html', function() {
+function build_docs_html() {
 	return run('python make_docs.py').exec()
-		.on('error', gutil.log);
-});
+		.on('error', log.error);
+}
 
 // Deletes the entire _site directory.
-gulp.task('clean:docs', function(callback) {
-	del([paths.srcXmlFolderName, paths.srcHtmlFolderName, paths.siteDir])
+function clean_docs(callback) {
+	return del([paths.srcXmlFolderName, paths.srcHtmlFolderName, paths.siteDir])
 		.then(function(result) {callback();});
-});
+}
 
-gulp.task('clean', gulp.parallel(
-	'clean:docs',
-	'clean:fonts',
-	'clean:images',
-	'clean:assets',
-	'clean:scripts',
-	'clean:styles'));
+const clean = parallel(
+	clean_docs,
+	clean_fonts,
+	clean_images,
+	clean_assets,
+	clean_scripts,
+	clean_styles);
 
 // Builds site anew.
-gulp.task('build', gulp.series('clean', 'build:docs:xml', 'build:docs:html',
-		gulp.parallel('build:scripts', 'build:images', 'build:assets', 'build:styles', 'build:fonts'),
-		'html'));
+const build = series(clean, build_docs_xml, build_docs_html,
+		parallel(build_scripts, build_images, build_assets, build_styles, build_fonts),
+		html);
 
 // Default Task: builds site.
-gulp.task('default', gulp.series('build'));
+export default build;
 
 // Updates Ruby gems
-gulp.task('update:bundle', function() {
-	return gulp.src('')
+function update_bundle() {
+	return src('')
 		.pipe(run('bundle install'))
 		.pipe(run('bundle update'))
 		.pipe(notify({ message: 'Bundle Update Complete' }))
-		.on('error', gutil.log);
-});
+		.on('error', log.error);
+}

@@ -1,4 +1,4 @@
-var paths = {};
+export var paths = {};
 
 // Directory locations.
 paths.assetsDir       = '';						// The files Gulp will handle.
@@ -50,4 +50,4 @@ paths.assetFilesGlob = paths.assetFiles + paths.assetPattern;
 // Site files globs
 paths.siteHtmlFilesGlob = paths.siteDir + paths.htmlPattern;
 
-module.exports = paths; 
+export default { paths: paths }

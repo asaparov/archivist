@@ -1,0 +1,20 @@
+{
+  "type": "module",
+  "dependencies": {
+    "autoprefixer": "^10.4.4",
+    "del": "^6.0.0",
+    "fancy-log": "^2.0.0",
+    "gulp": "^4.0.2",
+    "gulp-clean-css": "^4.3.0",
+    "gulp-concat": "^2.6.1",
+    "gulp-htmlmin": "^5.0.1",
+    "gulp-imagemin": "^8.0.0",
+    "gulp-inline-source": "^4.0.0",
+    "gulp-notify": "^4.0.0",
+    "gulp-postcss": "^9.0.1",
+    "gulp-rename": "^2.0.0",
+    "gulp-run": "^1.7.1",
+    "gulp-uglify": "^3.0.2",
+    "postcss-font-magician": "^3.0.0"
+  }
+}
