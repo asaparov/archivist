@@ -28,7 +28,7 @@ def md5_hash(path):
 
 def get_path(path):
 	if path.find(src_root) != 0:
-		raise ValueError('Given filepath does not begin with source prefix.')
+		raise ValueError('Given filepath "{}" does not begin with source prefix.'.format(path))
 	return path[len(src_root):]
 
 class Location:
@@ -395,7 +395,7 @@ def parse_function(member):
 	else:
 		location = Location(location_attrib['file'], int(location_attrib['line']), None)
 	for template_param in member.findall('templateparamlist/param'):
-		type = template_param.find('type').text
+		type = ''.join(template_param.find('type').itertext())
 		declname_element = template_param.find('declname')
 		type += ' ' + declname_element.text if declname_element != None else ''
 		default_value_element = template_param.find('defval')
@@ -465,7 +465,7 @@ def parse_class(ref):
 	location_attrib = tree.find('compounddef/location').attrib
 	location = Location(location_attrib['bodyfile'], int(location_attrib['bodystart']), int(location_attrib['bodyend']))
 	for template_param in tree.findall('compounddef/templateparamlist/param'):
-		type = template_param.find('type').text
+		type = ''.join(template_param.find('type').itertext())
 		declname_element = template_param.find('declname')
 		type += ' '+declname_element.text if declname_element != None else ''
 		default_value_element = template_param.find('defval')
@@ -542,7 +542,20 @@ def parse_index(files):
 	for page in tree.findall('compound[@kind=\'page\']'):
 		filename = page.find('name').text
 		if filename.find('md_') == 0:
-			filename = get_path(filename[3:].replace('_', os.path.sep) + '.md')
+			filename = filename[3:]
+			i = 0
+			new_filename = []
+			while i < len(filename):
+				if filename[i] == '_':
+					if filename[i+1] == '2':
+						new_filename.append(os.path.sep)
+					else:
+						new_filename.append(filename[i+1].upper())
+					i += 2
+					continue
+				new_filename.append(filename[i])
+				i += 1
+			filename = get_path(''.join(new_filename) + '.md')
 			files[filename] = File()
 			files[filename].description = parse_readme(page.attrib['refid'])
 
